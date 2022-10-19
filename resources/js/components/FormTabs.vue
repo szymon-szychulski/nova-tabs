@@ -2,21 +2,16 @@
   <div :class="darkModeClass">
     <div class="tab-group">
       <slot>
-        <Heading v-if="panel.showTitle" :level="1" v-text="panel.name"/>
+        <Heading :level="1" :class="panel.helpText ? 'mb-2' : 'mb-3'" v-text="panel.name"/>
 
         <p
           v-if="panel.helpText"
-          :class="panel.helpText ? 'tabs-mt-2' : 'tabs-mt-3'"
-          class="tabs-text-gray-500 tabs-text-sm tabs-font-semibold tabs-italic"
+          class="text-gray-500 text-sm font-semibold italic mb-3"
           v-html="panel.helpText"
         ></p>
       </slot>
 
-      <div class="tab-card"
-           :class="[
-          panel.showTitle && !panel.showToolbar ? 'tabs-mt-3' : ''
-        ]"
-      >
+      <div class="tab-card">
         <div id="tabs">
           <div class="block">
             <nav
@@ -50,54 +45,122 @@
                     ]"
           :label="tab.name"
         >
-          <div class="divide-y divide-gray-100 dark:divide-gray-700" :class="getBodyClass(tab)">
-            <KeepAlive>
-              <template
-                v-for="(field, index) in tab.fields"
-                :key="'tab-' + index"
-              >
-                <component
-                  v-if="!field.from"
-                  :is="getComponentName(field)"
-                  ref="fields"
-                  :class="{'remove-bottom-border': index === tab.fields.length - 1}"
-                  :errors="validationErrors"
-                  :field="field"
-                  :form-unique-id="formUniqueId"
-                  :related-resource-id="relatedResourceId"
-                  :related-resource-name="relatedResourceName"
-                  :resource-id="resourceId"
-                  :resource-name="resourceName"
-                  :show-help-text="field.helpText != null"
-                  :shown-via-new-relation-modal="shownViaNewRelationModal"
-                  :via-relationship="viaRelationship"
-                  :via-resource="viaResource"
-                  :via-resource-id="viaResourceId"
-                  @field-changed="$emit('field-changed')"
-                  @file-deleted="$emit('update-last-retrieved-at-timestamp')"
-                  @file-upload-started="$emit('file-upload-started')"
-                  @file-upload-finished="$emit('file-upload-finished')"
-                />
-
-                <component
-                    v-if="field.from"
+          <div :class="getBodyClass(tab)">
+            <Card
+              v-if="tab.fields.filter(field => getComponentName(field) != 'form-has-one-field').length > 0"
+              class="mt-3 py-2 divide-y divide-gray-100 dark:divide-gray-700"
+            >
+              <KeepAlive>
+                <template
+                  v-for="(field, index) in tab.fields.filter(field => getComponentName(field) != 'form-has-one-field')"
+                  :key="'tab-' + index"
+                >
+                  <component
+                    v-if="!field.from"
                     :is="getComponentName(field)"
+                    ref="fields"
                     :errors="validationErrors"
-                    :resource-id="getResourceId(field)"
-                    :resource-name="field.resourceName"
                     :field="field"
-                    :via-resource="field.from.viaResource"
-                    :via-resource-id="field.from.viaResourceId"
-                    :via-relationship="field.from.viaRelationship"
-                    :form-unique-id="relationFormUniqueId"
+                    :form-unique-id="formUniqueId"
+                    :related-resource-id="relatedResourceId"
+                    :related-resource-name="relatedResourceName"
+                    :resource-id="resourceId"
+                    :resource-name="resourceName"
+                    :show-help-text="field.helpText != null"
+                    :shown-via-new-relation-modal="shownViaNewRelationModal"
+                    :via-relationship="viaRelationship"
+                    :via-resource="viaResource"
+                    :via-resource-id="viaResourceId"
                     @field-changed="$emit('field-changed')"
                     @file-deleted="$emit('update-last-retrieved-at-timestamp')"
                     @file-upload-started="$emit('file-upload-started')"
                     @file-upload-finished="$emit('file-upload-finished')"
-                    :show-help-text="field.helpText != null"
-                />
-              </template>
-            </KeepAlive>
+                  />
+
+                  <component
+                      v-if="field.from"
+                      :is="getComponentName(field)"
+                      :errors="validationErrors"
+                      :resource-id="getResourceId(field)"
+                      :resource-name="field.resourceName"
+                      :field="field"
+                      :via-resource="field.from.viaResource"
+                      :via-resource-id="field.from.viaResourceId"
+                      :via-relationship="field.from.viaRelationship"
+                      :form-unique-id="relationFormUniqueId"
+                      @field-changed="$emit('field-changed')"
+                      @file-deleted="$emit('update-last-retrieved-at-timestamp')"
+                      @file-upload-started="$emit('file-upload-started')"
+                      @file-upload-finished="$emit('file-upload-finished')"
+                      :show-help-text="field.helpText != null"
+                  />
+                </template>
+              </KeepAlive>
+            </Card>
+
+            <div
+              v-if="tab.fields.filter(field => getComponentName(field) === 'form-has-one-field').length > 0"
+              class="mt-6"
+            >
+              <KeepAlive>
+                <template
+                  v-for="(field, index) in tab.fields.filter(field => getComponentName(field) === 'form-has-one-field')"
+                  :key="'tab-' + index"
+                >
+                  <div class="mb-8">
+                    <Heading :level="4" :class="field.helpText ? 'mb-2' : 'mb-3'">
+                      {{field.name}}
+                    </Heading>
+
+                    <p
+                      v-if="field.helpText"
+                      class="text-gray-500 text-sm font-semibold italic mb-3"
+                      v-html="field.helpText"
+                    ></p>
+
+                    <component
+                      v-if="!field.from"
+                      :is="getComponentName(field)"
+                      ref="fields"
+                      :errors="validationErrors"
+                      :field="field"
+                      :form-unique-id="formUniqueId"
+                      :related-resource-id="relatedResourceId"
+                      :related-resource-name="relatedResourceName"
+                      :resource-id="resourceId"
+                      :resource-name="resourceName"
+                      :show-help-text="field.helpText != null"
+                      :shown-via-new-relation-modal="shownViaNewRelationModal"
+                      :via-relationship="viaRelationship"
+                      :via-resource="viaResource"
+                      :via-resource-id="viaResourceId"
+                      @field-changed="$emit('field-changed')"
+                      @file-deleted="$emit('update-last-retrieved-at-timestamp')"
+                      @file-upload-started="$emit('file-upload-started')"
+                      @file-upload-finished="$emit('file-upload-finished')"
+                    />
+
+                    <component
+                      v-if="field.from"
+                      :is="getComponentName(field)"
+                      :errors="validationErrors"
+                      :resource-id="getResourceId(field)"
+                      :resource-name="field.resourceName"
+                      :field="field"
+                      :via-resource="field.from.viaResource"
+                      :via-resource-id="field.from.viaResourceId"
+                      :via-relationship="field.from.viaRelationship"
+                      :form-unique-id="relationFormUniqueId"
+                      @field-changed="$emit('field-changed')"
+                      @file-deleted="$emit('update-last-retrieved-at-timestamp')"
+                      @file-upload-started="$emit('file-upload-started')"
+                      @file-upload-finished="$emit('file-upload-finished')"
+                      :show-help-text="field.helpText != null"
+                    />
+                  </div>
+                </template>
+              </KeepAlive>
+            </div>
           </div>
         </div>
       </div>

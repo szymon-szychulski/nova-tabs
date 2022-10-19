@@ -2,21 +2,17 @@
   <div :class="darkModeClass">
     <div class="tab-group">
       <slot>
-        <Heading :level="1" v-text="panel.name" v-if="panel.showTitle"/>
+        <Heading :level="1" v-text="panel.name" />
 
         <p
-            v-if="panel.helpText"
-            :class="panel.helpText ? 'tabs-mt-2' : 'tabs-mt-3'"
-            class="tabs-text-gray-500 tabs-text-sm tabs-font-semibold tabs-italic"
-            v-html="panel.helpText"
+          v-if="panel.helpText"
+          class="text-gray-500 text-sm font-semibold italic"
+          :class="panel.helpText ? 'mt-2' : 'mt-3'"
+          v-html="panel.helpText"
         ></p>
       </slot>
 
-      <div class="tab-card"
-           :class="[
-          panel.showTitle && !panel.showToolbar ? 'tabs-mt-3' : ''
-        ]"
-      >
+      <div class="tab-card">
         <div id="tabs">
           <div class="block">
             <nav
@@ -49,19 +45,48 @@
             :label="tab.name"
             v-show="getIsTabCurrent(tab)"
         >
-          <div class="divide-y divide-gray-100 dark:divide-gray-700" :class="getBodyClass(tab)">
-            <KeepAlive v-for="(field, index) in tab.fields" :key="index">
-              <component
+          <div :class="getBodyClass(tab)">
+            <Card
+              v-if="tab.fields.filter(field => getComponentName(field) != 'detail-has-many-field').length > 0"
+              class="mt-3 py-2 px-6 divide-y divide-gray-100 dark:divide-gray-700"
+            >
+              <KeepAlive
+                v-for="(field, index) in tab.fields.filter(field => getComponentName(field) != 'detail-has-many-field')"
+                :key="index"
+              >
+                <component
                   :is="getComponentName(field)"
-                  :class="{'remove-bottom-border': index === tab.fields.length - 1}"
                   :field="field"
                   :index="index"
                   :resource="resource"
                   :resource-id="resourceId"
                   :resource-name="resourceName"
                   @actionExecuted="actionExecuted"
-              />
-            </KeepAlive>
+                />
+              </KeepAlive>
+            </Card>
+
+            <div
+              v-if="tab.fields.filter(field => getComponentName(field) === 'detail-has-many-field').length > 0"
+              class="mt-6"
+            >
+              <KeepAlive
+                v-for="(field, index) in tab.fields.filter(field => getComponentName(field) === 'detail-has-many-field')"
+                :key="index"
+              >
+                  <div class="mb-8">
+                    <component
+                      :is="getComponentName(field)"
+                      :field="field"
+                      :index="index"
+                      :resource="resource"
+                      :resource-id="resourceId"
+                      :resource-name="resourceName"
+                      @actionExecuted="actionExecuted"
+                    />
+                  </div>
+              </KeepAlive>
+            </div>
           </div>
         </div>
       </div>
